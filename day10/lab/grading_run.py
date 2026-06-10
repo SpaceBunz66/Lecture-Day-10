@@ -26,10 +26,12 @@ def main() -> int:
     p.add_argument(
         "--questions",
         default=str(ROOT / "data" / "grading_questions.json"),
+        # default=str(ROOT / "data" / "test_questions.json"),
     )
     p.add_argument(
         "--out",
         default=str(ROOT / "artifacts" / "eval" / "grading_run.jsonl"),
+        # default=str(ROOT / "artifacts" / "eval" / "test_run.jsonl"),
     )
     p.add_argument("--top-k", type=int, default=5)
     args = p.parse_args()
