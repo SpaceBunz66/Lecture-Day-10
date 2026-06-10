@@ -112,5 +112,62 @@ def run_expectations(cleaned_rows: List[Dict[str, Any]]) -> Tuple[List[Expectati
         )
     )
 
+    # E7: access_control_sop phải tồn tại sau clean
+    # Lý do: grading câu Level 4 Admin Access phụ thuộc vào document này.
+    access_control_rows = [
+        r
+        for r in cleaned_rows
+        if r.get("doc_id") == "access_control_sop"
+    ]
+    ok7 = len(access_control_rows) > 0
+    results.append(
+        ExpectationResult(
+            "access_control_sop_present",
+            ok7,
+            "halt",
+            f"access_control_sop_rows={len(access_control_rows)}",
+        )
+    )
+
+    # E8: không còn nội dung Ticket P2 trong document SLA P1
+    # Lý do: P2 escalation 90 phút gây nhiễu retrieval cho câu hỏi P1 escalation 10 phút.
+    bad_p2_in_p1 = [
+        r
+        for r in cleaned_rows
+        if r.get("doc_id") == "sla_p1_2026"
+        and "Ticket P2" in (r.get("chunk_text") or "")
+    ]
+    ok8 = len(bad_p2_in_p1) == 0
+    results.append(
+        ExpectationResult(
+            "sla_p1_no_ticket_p2_content",
+            ok8,
+            "halt",
+            f"violations={len(bad_p2_in_p1)}",
+        )
+    )
+
+    # E9: phải có chunk chứa escalation P1 10 phút
+    # Lý do: bảo đảm dữ liệu cleaned còn đủ thông tin để trả lời grading gq_d10_06.
+    p1_escalation_rows = [
+        r
+        for r in cleaned_rows
+        if r.get("doc_id") == "sla_p1_2026"
+        and "10 phút" in (r.get("chunk_text") or "")
+        and (
+            "escalate" in (r.get("chunk_text") or "").lower()
+            or "escalation" in (r.get("chunk_text") or "").lower()
+        )
+    ]
+    ok9 = len(p1_escalation_rows) > 0
+    results.append(
+        ExpectationResult(
+            "sla_p1_escalation_10min_present",
+            ok9,
+            "halt",
+            f"p1_escalation_10min_rows={len(p1_escalation_rows)}",
+        )
+    )
+
     halt = any(not r.passed and r.severity == "halt" for r in results)
     return results, halt
